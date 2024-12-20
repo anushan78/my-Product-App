@@ -1,32 +1,36 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-
-enum ProductEnum {
-  book = "book",
-  pen = "pen",
-  pencil = "pencil",
-  shoes = "shoes",
-}
-
-interface IFormInput {
-  productName: string;
-  category: ProductEnum;
-  quantity: number;
-}
+import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { IFormInput } from "./types/interfaces";
 
 function CreateProduct() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitted },
+    setError,
+    formState: { errors, isSubmitting, isSubmitted },
   } = useForm<IFormInput>({
     criteriaMode: "all",
+    defaultValues: {
+      productName: "sample",
+    },
   });
   const [productList, setProductList] = useState<IFormInput[]>([]);
 
-  const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    setProductList((previousProduct) => [...previousProduct, data]);
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/posts/1")
+      .then((response) => response.json())
+      .then((json) => console.log(json));
+  }, []);
+
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      //throw new Error();
+      setProductList((previousProduct) => [...previousProduct, data]);
+    } catch (error) {
+      setError("root", { message: "Error in Saving" });
+    }
   };
 
   return (
@@ -74,7 +78,10 @@ function CreateProduct() {
               {...register("quantity", {
                 required: "Quantity is required",
                 min: { value: 1, message: "Quantity should be more than 0" },
-                max: { value: 100, message: "Quantity should be less than 100" },
+                max: {
+                  value: 100,
+                  message: "Quantity should be less than 100",
+                },
               })}
             />
           </div>
@@ -88,8 +95,13 @@ function CreateProduct() {
           <div className="col-sm-2"></div>
           <div className="col-sm-4">
             <button type="submit" className="btn btn-primary">
-              Save
+              {isSubmitting ? "...Saving" : "Save"}
             </button>
+          </div>
+          <div className="col-sm-4">
+            {isSubmitted && errors.root && (
+              <p className="text-danger">{errors.root.message}</p>
+            )}
           </div>
         </div>
       </form>
